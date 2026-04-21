@@ -30,10 +30,7 @@
   <div class="bg-gray-900 p-8 rounded w-80">
     <h2 class="text-2xl mb-4">Login</h2>
 
-    <input id="email" type="email" placeholder="Email"
-      class="w-full p-2 mb-3 bg-black border border-gray-700 rounded">
-
-    <input id="password" type="password" placeholder="Password"
+    <input id="username" type="text" placeholder="Username (e.g. nash)"
       class="w-full p-2 mb-4 bg-black border border-gray-700 rounded">
 
     <button onclick="login()" class="w-full bg-orange-500 py-2 rounded mb-2">Login</button>
@@ -84,13 +81,13 @@
 </div>
 
 <script>
-  // 🔑 CONFIG
+  // 🔑 SUPABASE CONFIG
   const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
   const SUPABASE_KEY = "YOUR_ANON_KEY";
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // 📡 API SIMULATION
+  // 📡 API
   const API = {
     getClients: () => supabase.from("clients").select("*"),
     createClient: (data) => supabase.from("clients").insert([data]),
@@ -102,19 +99,44 @@
     createPolicy: (data) => supabase.from("policies").insert([data])
   };
 
+  // 🧠 USER HELPERS
+  function getUsername() {
+    return document.getElementById("username").value.trim().toLowerCase();
+  }
+
+  function generateEmail() {
+    return `${getUsername()}@lavacarrier.com`;
+  }
+
+  function defaultPassword() {
+    return "LavaCarrier2026!!";
+  }
+
   // 🔐 AUTH
   async function signup() {
-    const email = emailInput();
-    const password = passwordInput();
+    const email = generateEmail();
+    const password = defaultPassword();
+
+    if (!getUsername()) {
+      alert("Please enter a username");
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({ email, password });
+
     if (error) alert(error.message);
-    else alert("Check your email!");
+    else alert(`Account created:\n${email}`);
   }
 
   async function login() {
-    const email = emailInput();
-    const password = passwordInput();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const email = generateEmail();
+    const password = defaultPassword();
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
     if (error) alert(error.message);
   }
 
@@ -122,14 +144,7 @@
     await supabase.auth.signOut();
   }
 
-  function emailInput() {
-    return document.getElementById("email").value;
-  }
-
-  function passwordInput() {
-    return document.getElementById("password").value;
-  }
-
+  // UI SWITCH
   function showDashboard(user) {
     document.getElementById("login-box").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
@@ -163,36 +178,33 @@
 
   async function loadClients() {
     const { data } = await API.getClients();
-    document.getElementById("client-count").innerText = data.length;
+    document.getElementById("client-count").innerText = data?.length || 0;
 
     const list = document.getElementById("clients-list");
     list.innerHTML = "";
-
-    data.forEach(c => {
+    data?.forEach(c => {
       list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${c.name}</div>`;
     });
   }
 
   async function loadLeads() {
     const { data } = await API.getLeads();
-    document.getElementById("lead-count").innerText = data.length;
+    document.getElementById("lead-count").innerText = data?.length || 0;
 
     const list = document.getElementById("leads-list");
     list.innerHTML = "";
-
-    data.forEach(l => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${l.name} (${l.status})</div>`;
+    data?.forEach(l => {
+      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${l.name} (${l.status || "New"})</div>`;
     });
   }
 
   async function loadPolicies() {
     const { data } = await API.getPolicies();
-    document.getElementById("policy-count").innerText = data.length;
+    document.getElementById("policy-count").innerText = data?.length || 0;
 
     const list = document.getElementById("policies-list");
     list.innerHTML = "";
-
-    data.forEach(p => {
+    data?.forEach(p => {
       list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${p.policy_type} - $${p.premium}</div>`;
     });
   }
@@ -208,7 +220,8 @@
   async function addLead() {
     const name = prompt("Lead Name:");
     const email = prompt("Email:");
-    await API.createLead({ name, email });
+    const status = prompt("Status:");
+    await API.createLead({ name, email, status });
     loadLeads();
   }
 
