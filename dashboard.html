@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lava Carrier Dashboard</title>
+  <title>Lava Training Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,7 @@
 
 <!-- NAVBAR -->
 <div class="flex justify-between items-center p-4 border-b border-gray-800">
-  <h1 class="text-orange-500 text-xl font-bold">🔥 Lava Carrier</h1>
+  <h1 class="text-orange-500 text-xl font-bold">🔥 Lava Training</h1>
 
   <div id="auth-section">
     <button onclick="showLogin()" class="bg-orange-500 px-4 py-2 rounded">Login</button>
@@ -28,7 +28,7 @@
 <!-- LOGIN -->
 <div id="login-box" class="flex items-center justify-center h-screen">
   <div class="bg-gray-900 p-8 rounded w-80">
-    <h2 class="text-2xl mb-4">Login</h2>
+    <h2 class="text-2xl mb-4">VA Access</h2>
 
     <input id="username" type="text" placeholder="Username (e.g. nash)"
       class="w-full p-2 mb-4 bg-black border border-gray-700 rounded">
@@ -87,48 +87,51 @@
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // 📡 API
-  const API = {
-    getClients: () => supabase.from("clients").select("*"),
-    createClient: (data) => supabase.from("clients").insert([data]),
-
-    getLeads: () => supabase.from("leads").select("*"),
-    createLead: (data) => supabase.from("leads").insert([data]),
-
-    getPolicies: () => supabase.from("policies").select("*"),
-    createPolicy: (data) => supabase.from("policies").insert([data])
-  };
-
-  // 🧠 USER HELPERS
+  // 🧠 HELPERS
   function getUsername() {
     return document.getElementById("username").value.trim().toLowerCase();
   }
 
   function generateEmail() {
-    return `${getUsername()}@lavacarrier.com`;
+    return `${getUsername()}@lavatraining.com`;
   }
 
   function defaultPassword() {
-    return "LavaCarrier2026!!";
+    return "LavaTraining2026!!";
   }
 
   // 🔐 AUTH
   async function signup() {
-    const email = generateEmail();
-    const password = defaultPassword();
+    const username = getUsername();
 
-    if (!getUsername()) {
-      alert("Please enter a username");
+    if (!username) {
+      alert("Please enter username");
       return;
     }
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const email = generateEmail();
+    const password = defaultPassword();
 
-    if (error) alert(error.message);
-    else alert(`Account created:\n${email}`);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert(`Account created:\n${email}`);
+    }
   }
 
   async function login() {
+    const username = getUsername();
+
+    if (!username) {
+      alert("Please enter username");
+      return;
+    }
+
     const email = generateEmail();
     const password = defaultPassword();
 
@@ -137,7 +140,9 @@
       password
     });
 
-    if (error) alert(error.message);
+    if (error) {
+      alert(error.message);
+    }
   }
 
   async function logout() {
@@ -169,7 +174,19 @@
     else showLoggedOut();
   });
 
-  // 📊 LOAD DATA
+  // 📊 API
+  const API = {
+    getClients: () => supabase.from("clients").select("*"),
+    createClient: (data) => supabase.from("clients").insert([data]),
+
+    getLeads: () => supabase.from("leads").select("*"),
+    createLead: (data) => supabase.from("leads").insert([data]),
+
+    getPolicies: () => supabase.from("policies").select("*"),
+    createPolicy: (data) => supabase.from("policies").insert([data])
+  };
+
+  // 📦 LOAD DATA
   async function loadAll() {
     loadClients();
     loadLeads();
@@ -182,6 +199,7 @@
 
     const list = document.getElementById("clients-list");
     list.innerHTML = "";
+
     data?.forEach(c => {
       list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${c.name}</div>`;
     });
@@ -193,6 +211,7 @@
 
     const list = document.getElementById("leads-list");
     list.innerHTML = "";
+
     data?.forEach(l => {
       list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${l.name} (${l.status || "New"})</div>`;
     });
@@ -204,12 +223,13 @@
 
     const list = document.getElementById("policies-list");
     list.innerHTML = "";
+
     data?.forEach(p => {
       list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${p.policy_type} - $${p.premium}</div>`;
     });
   }
 
-  // ➕ ADD DATA
+  // ➕ ADD
   async function addClient() {
     const name = prompt("Client Name:");
     const email = prompt("Email:");
