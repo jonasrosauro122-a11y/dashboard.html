@@ -15,73 +15,51 @@
 <div class="flex justify-between items-center p-4 border-b border-gray-800">
   <h1 class="text-orange-500 text-xl font-bold">🔥 Lava Training</h1>
 
-  <div id="auth-section">
-    <button onclick="showLogin()" class="bg-orange-500 px-4 py-2 rounded">Login</button>
-  </div>
-
   <div id="user-section" class="hidden space-x-4">
     <span id="user-email"></span>
     <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">Logout</button>
   </div>
 </div>
 
-<!-- LOGIN -->
-<div id="login-box" class="flex items-center justify-center h-screen">
+<!-- LOGIN SCREEN -->
+<div id="login-box" class="fixed inset-0 flex items-center justify-center bg-black z-50">
   <div class="bg-gray-900 p-8 rounded w-80">
-    <h2 class="text-2xl mb-4">VA Access</h2>
+
+    <h2 class="text-2xl mb-4">VA Login</h2>
 
     <input id="username" type="text" placeholder="Username (e.g. nash)"
       class="w-full p-2 mb-4 bg-black border border-gray-700 rounded">
 
-    <button onclick="login()" class="w-full bg-orange-500 py-2 rounded mb-2">Login</button>
-    <button onclick="signup()" class="w-full border border-orange-500 py-2 rounded">Sign Up</button>
+    <!-- LOGIN -->
+    <button onclick="login()"
+      class="w-full bg-orange-500 py-2 rounded mb-2 hover:opacity-80">
+      Login
+    </button>
+
+    <!-- SIGN UP -->
+    <button onclick="signup()"
+      class="w-full border border-orange-500 py-2 rounded hover:bg-orange-500/20">
+      Sign Up
+    </button>
+
   </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden p-6">
 
-  <!-- STATS -->
-  <div class="grid md:grid-cols-3 gap-4 mb-8">
-    <div class="bg-gray-900 p-4 rounded">
-      <h3>Clients</h3>
-      <p id="client-count" class="text-2xl">0</p>
-    </div>
-    <div class="bg-gray-900 p-4 rounded">
-      <h3>Leads</h3>
-      <p id="lead-count" class="text-2xl">0</p>
-    </div>
-    <div class="bg-gray-900 p-4 rounded">
-      <h3>Policies</h3>
-      <p id="policy-count" class="text-2xl">0</p>
-    </div>
-  </div>
+  <h2 class="text-xl mb-6">Dashboard</h2>
 
-  <!-- CLIENTS -->
-  <div class="mb-10">
-    <h2 class="text-xl mb-2">Clients</h2>
-    <button onclick="addClient()" class="bg-orange-500 px-3 py-1 rounded mb-2">Add Client</button>
-    <div id="clients-list"></div>
-  </div>
-
-  <!-- LEADS -->
-  <div class="mb-10">
-    <h2 class="text-xl mb-2">Leads</h2>
-    <button onclick="addLead()" class="bg-orange-500 px-3 py-1 rounded mb-2">Add Lead</button>
-    <div id="leads-list"></div>
-  </div>
-
-  <!-- POLICIES -->
-  <div>
-    <h2 class="text-xl mb-2">Policies</h2>
-    <button onclick="addPolicy()" class="bg-orange-500 px-3 py-1 rounded mb-2">Add Policy</button>
-    <div id="policies-list"></div>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-gray-900 p-4 rounded">Clients: <span id="client-count">0</span></div>
+    <div class="bg-gray-900 p-4 rounded">Leads: <span id="lead-count">0</span></div>
+    <div class="bg-gray-900 p-4 rounded">Policies: <span id="policy-count">0</span></div>
   </div>
 
 </div>
 
 <script>
-  // 🔑 SUPABASE CONFIG
+  // 🔑 SUPABASE CONFIG (REPLACE THIS)
   const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
   const SUPABASE_KEY = "YOUR_ANON_KEY";
 
@@ -100,12 +78,27 @@
     return "LavaTraining2026!!";
   }
 
-  // 🔐 AUTH
+  // 🔐 SHOW / HIDE UI
+  function showDashboard(user) {
+    document.getElementById("login-box").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+
+    document.getElementById("user-section").classList.remove("hidden");
+    document.getElementById("user-email").innerText = user.email;
+  }
+
+  function showLogin() {
+    document.getElementById("login-box").classList.remove("hidden");
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("user-section").classList.add("hidden");
+  }
+
+  // 🔐 SIGN UP
   async function signup() {
     const username = getUsername();
 
     if (!username) {
-      alert("Please enter username");
+      alert("Enter username");
       return;
     }
 
@@ -124,11 +117,12 @@
     }
   }
 
+  // 🔐 LOGIN
   async function login() {
     const username = getUsername();
 
     if (!username) {
-      alert("Please enter username");
+      alert("Enter username");
       return;
     }
 
@@ -145,118 +139,29 @@
     }
   }
 
+  // 🚪 LOGOUT
   async function logout() {
     await supabase.auth.signOut();
   }
 
-  // UI SWITCH
-  function showDashboard(user) {
-    document.getElementById("login-box").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-
-    document.getElementById("auth-section").classList.add("hidden");
-    document.getElementById("user-section").classList.remove("hidden");
-    document.getElementById("user-email").innerText = user.email;
-
-    loadAll();
-  }
-
-  function showLoggedOut() {
-    document.getElementById("login-box").classList.remove("hidden");
-    document.getElementById("dashboard").classList.add("hidden");
-
-    document.getElementById("auth-section").classList.remove("hidden");
-    document.getElementById("user-section").classList.add("hidden");
-  }
-
+  // 📡 AUTH STATE LISTENER
   supabase.auth.onAuthStateChange((event, session) => {
-    if (session) showDashboard(session.user);
-    else showLoggedOut();
+    if (session) {
+      showDashboard(session.user);
+    } else {
+      showLogin();
+    }
   });
 
-  // 📊 API
-  const API = {
-    getClients: () => supabase.from("clients").select("*"),
-    createClient: (data) => supabase.from("clients").insert([data]),
-
-    getLeads: () => supabase.from("leads").select("*"),
-    createLead: (data) => supabase.from("leads").insert([data]),
-
-    getPolicies: () => supabase.from("policies").select("*"),
-    createPolicy: (data) => supabase.from("policies").insert([data])
-  };
-
-  // 📦 LOAD DATA
-  async function loadAll() {
-    loadClients();
-    loadLeads();
-    loadPolicies();
-  }
-
-  async function loadClients() {
-    const { data } = await API.getClients();
-    document.getElementById("client-count").innerText = data?.length || 0;
-
-    const list = document.getElementById("clients-list");
-    list.innerHTML = "";
-
-    data?.forEach(c => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${c.name}</div>`;
-    });
-  }
-
-  async function loadLeads() {
-    const { data } = await API.getLeads();
-    document.getElementById("lead-count").innerText = data?.length || 0;
-
-    const list = document.getElementById("leads-list");
-    list.innerHTML = "";
-
-    data?.forEach(l => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${l.name} (${l.status || "New"})</div>`;
-    });
-  }
-
-  async function loadPolicies() {
-    const { data } = await API.getPolicies();
-    document.getElementById("policy-count").innerText = data?.length || 0;
-
-    const list = document.getElementById("policies-list");
-    list.innerHTML = "";
-
-    data?.forEach(p => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${p.policy_type} - $${p.premium}</div>`;
-    });
-  }
-
-  // ➕ ADD
-  async function addClient() {
-    const name = prompt("Client Name:");
-    const email = prompt("Email:");
-    await API.createClient({ name, email });
-    loadClients();
-  }
-
-  async function addLead() {
-    const name = prompt("Lead Name:");
-    const email = prompt("Email:");
-    const status = prompt("Status:");
-    await API.createLead({ name, email, status });
-    loadLeads();
-  }
-
-  async function addPolicy() {
-    const policy_type = prompt("Policy Type:");
-    const premium = prompt("Premium:");
-    await API.createPolicy({ policy_type, premium });
-    loadPolicies();
-  }
-
-  // INIT
+  // 🚀 INIT
   window.onload = async () => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) showDashboard(data.session.user);
-    else showLoggedOut();
+
+    if (data.session) {
+      showDashboard(data.session.user);
+    } else {
+      showLogin();
+    }
   };
 </script>
 
