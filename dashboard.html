@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lava Training Dashboard</title>
+  <title>Lava Carrier Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,11 @@
 
 <!-- NAVBAR -->
 <div class="flex justify-between items-center p-4 border-b border-gray-800">
-  <h1 class="text-orange-500 text-xl font-bold">🔥 Lava Training</h1>
+  <h1 class="text-orange-500 text-xl font-bold">🔥 Lava Carrier</h1>
+
+  <div id="auth-section">
+    <button onclick="showLogin()" class="bg-orange-500 px-4 py-2 rounded">Login</button>
+  </div>
 
   <div id="user-section" class="hidden space-x-4">
     <span id="user-email"></span>
@@ -21,147 +25,205 @@
   </div>
 </div>
 
-<!-- LOGIN SCREEN -->
-<div id="login-box" class="fixed inset-0 flex items-center justify-center bg-black z-50">
+<!-- LOGIN -->
+<div id="login-box" class="flex items-center justify-center h-screen">
   <div class="bg-gray-900 p-8 rounded w-80">
+    <h2 class="text-2xl mb-4">Login</h2>
 
-    <h2 class="text-2xl mb-4">VA Login</h2>
+    <input id="email" type="email" placeholder="Email"
+      class="w-full p-2 mb-3 bg-black border border-gray-700 rounded">
 
-    <input id="username" type="text" placeholder="Username (e.g. nash)"
+    <input id="password" type="password" placeholder="Password"
       class="w-full p-2 mb-4 bg-black border border-gray-700 rounded">
 
-    <!-- LOGIN -->
-    <button onclick="login()"
-      class="w-full bg-orange-500 py-2 rounded mb-2 hover:opacity-80">
-      Login
-    </button>
-
-    <!-- SIGN UP -->
-    <button onclick="signup()"
-      class="w-full border border-orange-500 py-2 rounded hover:bg-orange-500/20">
-      Sign Up
-    </button>
-
+    <button onclick="login()" class="w-full bg-orange-500 py-2 rounded mb-2">Login</button>
+    <button onclick="signup()" class="w-full border border-orange-500 py-2 rounded">Sign Up</button>
   </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden p-6">
 
-  <h2 class="text-xl mb-6">Dashboard</h2>
+  <!-- STATS -->
+  <div class="grid md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-gray-900 p-4 rounded">
+      <h3>Clients</h3>
+      <p id="client-count" class="text-2xl">0</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded">
+      <h3>Leads</h3>
+      <p id="lead-count" class="text-2xl">0</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded">
+      <h3>Policies</h3>
+      <p id="policy-count" class="text-2xl">0</p>
+    </div>
+  </div>
 
-  <div class="grid md:grid-cols-3 gap-4">
-    <div class="bg-gray-900 p-4 rounded">Clients: <span id="client-count">0</span></div>
-    <div class="bg-gray-900 p-4 rounded">Leads: <span id="lead-count">0</span></div>
-    <div class="bg-gray-900 p-4 rounded">Policies: <span id="policy-count">0</span></div>
+  <!-- CLIENTS -->
+  <div class="mb-10">
+    <h2 class="text-xl mb-2">Clients</h2>
+    <button onclick="addClient()" class="bg-orange-500 px-3 py-1 rounded mb-2">Add Client</button>
+    <div id="clients-list"></div>
+  </div>
+
+  <!-- LEADS -->
+  <div class="mb-10">
+    <h2 class="text-xl mb-2">Leads</h2>
+    <button onclick="addLead()" class="bg-orange-500 px-3 py-1 rounded mb-2">Add Lead</button>
+    <div id="leads-list"></div>
+  </div>
+
+  <!-- POLICIES -->
+  <div>
+    <h2 class="text-xl mb-2">Policies</h2>
+    <button onclick="addPolicy()" class="bg-orange-500 px-3 py-1 rounded mb-2">Add Policy</button>
+    <div id="policies-list"></div>
   </div>
 
 </div>
 
 <script>
-  // 🔑 SUPABASE CONFIG (REPLACE THIS)
-  const SUPABASE_URL = "https://https://wgfptdxqpupblzmvixvi.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnZnB0ZHhxcHVwYmx6bXZpeHZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTM2OTIsImV4cCI6MjA5MjM2OTY5Mn0.JgrpA9sGscsleahi31Njb3fch8nntNDg0qq7pngwR6U";
+  // 🔑 CONFIG
+  const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+  const SUPABASE_KEY = "YOUR_ANON_KEY";
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // 🧠 HELPERS
-  function getUsername() {
-    return document.getElementById("username").value.trim().toLowerCase();
-  }
+  // 📡 API SIMULATION
+  const API = {
+    getClients: () => supabase.from("clients").select("*"),
+    createClient: (data) => supabase.from("clients").insert([data]),
 
-  function generateEmail() {
-    return `${getUsername()}@lavatraining.com`;
-  }
+    getLeads: () => supabase.from("leads").select("*"),
+    createLead: (data) => supabase.from("leads").insert([data]),
 
-  function defaultPassword() {
-    return "LavaTraining2026!!";
-  }
+    getPolicies: () => supabase.from("policies").select("*"),
+    createPolicy: (data) => supabase.from("policies").insert([data])
+  };
 
-  // 🔐 SHOW / HIDE UI
-  function showDashboard(user) {
-    document.getElementById("login-box").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-
-    document.getElementById("user-section").classList.remove("hidden");
-    document.getElementById("user-email").innerText = user.email;
-  }
-
-  function showLogin() {
-    document.getElementById("login-box").classList.remove("hidden");
-    document.getElementById("dashboard").classList.add("hidden");
-    document.getElementById("user-section").classList.add("hidden");
-  }
-
-  // 🔐 SIGN UP
+  // 🔐 AUTH
   async function signup() {
-    const username = getUsername();
-
-    if (!username) {
-      alert("Enter username");
-      return;
-    }
-
-    const email = generateEmail();
-    const password = defaultPassword();
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password
-    });
-
-    if (error) {
-      alert(error.message);
-    } else {
-      alert(`Account created:\n${email}`);
-    }
+    const email = emailInput();
+    const password = passwordInput();
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) alert(error.message);
+    else alert("Check your email!");
   }
 
-  // 🔐 LOGIN
   async function login() {
-    const username = getUsername();
-
-    if (!username) {
-      alert("Enter username");
-      return;
-    }
-
-    const email = generateEmail();
-    const password = defaultPassword();
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      alert(error.message);
-    }
+    const email = emailInput();
+    const password = passwordInput();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
   }
 
-  // 🚪 LOGOUT
   async function logout() {
     await supabase.auth.signOut();
   }
 
-  // 📡 AUTH STATE LISTENER
+  function emailInput() {
+    return document.getElementById("email").value;
+  }
+
+  function passwordInput() {
+    return document.getElementById("password").value;
+  }
+
+  function showDashboard(user) {
+    document.getElementById("login-box").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("user-section").classList.remove("hidden");
+    document.getElementById("user-email").innerText = user.email;
+
+    loadAll();
+  }
+
+  function showLoggedOut() {
+    document.getElementById("login-box").classList.remove("hidden");
+    document.getElementById("dashboard").classList.add("hidden");
+
+    document.getElementById("auth-section").classList.remove("hidden");
+    document.getElementById("user-section").classList.add("hidden");
+  }
+
   supabase.auth.onAuthStateChange((event, session) => {
-    if (session) {
-      showDashboard(session.user);
-    } else {
-      showLogin();
-    }
+    if (session) showDashboard(session.user);
+    else showLoggedOut();
   });
 
-  // 🚀 INIT
+  // 📊 LOAD DATA
+  async function loadAll() {
+    loadClients();
+    loadLeads();
+    loadPolicies();
+  }
+
+  async function loadClients() {
+    const { data } = await API.getClients();
+    document.getElementById("client-count").innerText = data.length;
+
+    const list = document.getElementById("clients-list");
+    list.innerHTML = "";
+
+    data.forEach(c => {
+      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${c.name}</div>`;
+    });
+  }
+
+  async function loadLeads() {
+    const { data } = await API.getLeads();
+    document.getElementById("lead-count").innerText = data.length;
+
+    const list = document.getElementById("leads-list");
+    list.innerHTML = "";
+
+    data.forEach(l => {
+      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${l.name} (${l.status})</div>`;
+    });
+  }
+
+  async function loadPolicies() {
+    const { data } = await API.getPolicies();
+    document.getElementById("policy-count").innerText = data.length;
+
+    const list = document.getElementById("policies-list");
+    list.innerHTML = "";
+
+    data.forEach(p => {
+      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${p.policy_type} - $${p.premium}</div>`;
+    });
+  }
+
+  // ➕ ADD DATA
+  async function addClient() {
+    const name = prompt("Client Name:");
+    const email = prompt("Email:");
+    await API.createClient({ name, email });
+    loadClients();
+  }
+
+  async function addLead() {
+    const name = prompt("Lead Name:");
+    const email = prompt("Email:");
+    await API.createLead({ name, email });
+    loadLeads();
+  }
+
+  async function addPolicy() {
+    const policy_type = prompt("Policy Type:");
+    const premium = prompt("Premium:");
+    await API.createPolicy({ policy_type, premium });
+    loadPolicies();
+  }
+
+  // INIT
   window.onload = async () => {
     const { data } = await supabase.auth.getSession();
-
-    if (data.session) {
-      showDashboard(data.session.user);
-    } else {
-      showLogin();
-    }
+    if (data.session) showDashboard(data.session.user);
+    else showLoggedOut();
   };
 </script>
 
