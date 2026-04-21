@@ -95,10 +95,9 @@
 
   .welcome img {height:60px; border-radius:6px;}
 
-  /* ✅ NEW BANNER STYLE */
+  /* IMAGE STYLE */
   .automation-banner {
-    display:none;
-    margin-bottom:20px;
+    margin: 15px 0;
   }
 
   .automation-banner img {
@@ -109,12 +108,22 @@
     box-shadow:0 2px 8px rgba(0,0,0,0.15);
   }
 
+  /* LOGIN PAGE */
   #loginContainer {
     display:flex;
+    flex-direction:column;
     justify-content:center;
     align-items:center;
     height:100vh;
     background:#f4f7f6;
+    gap:20px;
+  }
+
+  .login-banner img {
+    width:320px;
+    max-width:90%;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
   }
 
   #loginForm {
@@ -158,6 +167,12 @@
 
 <!-- LOGIN -->
 <div id="loginContainer">
+
+  <!-- ✅ IMAGE ADDED IN LOGIN PAGE -->
+  <div class="login-banner">
+    <img src="images/lavaautomation.png" alt="Lava Automation">
+  </div>
+
   <form id="loginForm">
     <h2 style="color:#0d6efd;text-align:center;">Agent Login</h2>
     <input type="text" id="firstName" placeholder="First Name" class="form-input" required>
@@ -198,8 +213,8 @@
         <h2 id="welcome-agent-msg"></h2>
       </div>
 
-      <!-- ✅ NEW AUTOMATION IMAGE -->
-      <div id="automationBanner" class="automation-banner">
+      <!-- IMAGE IN DASHBOARD -->
+      <div class="automation-banner">
         <img src="images/lavaautomation.png" alt="Lava Automation">
       </div>
 
@@ -215,14 +230,6 @@
 <div class="alert" id="alertBox"></div>
 
 <script>
-
-function showAlert(msg, type="success") {
-  const box = document.getElementById("alertBox");
-  box.textContent = msg;
-  box.className = "alert" + (type==="error"?" error":"");
-  box.style.display = "block";
-  setTimeout(()=>box.style.display="none",3000);
-}
 
 function startQuote() {
   window.location.href = "quote.html";
@@ -249,9 +256,6 @@ document.getElementById("loginForm").addEventListener("submit", function(e){
     const full = first + " " + last;
     document.getElementById("welcome-agent-msg").textContent = "Hi " + full;
     document.getElementById("agent-display").textContent = full;
-
-    // ✅ SHOW IMAGE AFTER LOGIN
-    document.getElementById("automationBanner").style.display = "block";
   }
 });
 
@@ -266,9 +270,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const full = first + " " + last;
     document.getElementById("welcome-agent-msg").textContent = "Hi " + full;
     document.getElementById("agent-display").textContent = full;
-
-    // ✅ SHOW IMAGE ON SESSION RESTORE
-    document.getElementById("automationBanner").style.display = "block";
   }
 });
 
