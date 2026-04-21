@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lava Carrier Dashboard</title>
+  <title>Lava Carrier Dashboard (Local Only)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 
 <body class="bg-black text-white">
@@ -28,7 +27,7 @@
 <!-- LOGIN -->
 <div id="login-box" class="flex items-center justify-center h-screen">
   <div class="bg-gray-900 p-8 rounded w-80">
-    <h2 class="text-2xl mb-4">Login</h2>
+    <h2 class="text-2xl mb-4">Login (Local)</h2>
 
     <input id="email" type="email" placeholder="Email"
       class="w-full p-2 mb-3 bg-black border border-gray-700 rounded">
@@ -84,145 +83,144 @@
 </div>
 
 <script>
-  // 🔑 CONFIG
-  const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-  const SUPABASE_KEY = "YOUR_ANON_KEY";
+  // 🧠 LOCAL STORAGE DATA
+  let users = JSON.parse(localStorage.getItem('users')) || [];
+  let sessionUser = JSON.parse(localStorage.getItem('sessionUser')) || null;
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  let clients = JSON.parse(localStorage.getItem('clients')) || [];
+  let leads = JSON.parse(localStorage.getItem('leads')) || [];
+  let policies = JSON.parse(localStorage.getItem('policies')) || [];
 
-  // 📡 API SIMULATION
-  const API = {
-    getClients: () => supabase.from("clients").select("*"),
-    createClient: (data) => supabase.from("clients").insert([data]),
-
-    getLeads: () => supabase.from("leads").select("*"),
-    createLead: (data) => supabase.from("leads").insert([data]),
-
-    getPolicies: () => supabase.from("policies").select("*"),
-    createPolicy: (data) => supabase.from("policies").insert([data])
-  };
-
-  // 🔐 AUTH
-  async function signup() {
+  // 🔐 AUTH (LOCAL ONLY)
+  function signup() {
     const email = emailInput();
     const password = passwordInput();
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
-    else alert("Check your email!");
+
+    const exists = users.find(u => u.email === email);
+    if (exists) return alert('User already exists');
+
+    users.push({ email, password });
+    localStorage.setItem('users', JSON.stringify(users));
+
+    alert('Account created. You can now login.');
   }
 
-  async function login() {
+  function login() {
     const email = emailInput();
     const password = passwordInput();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert(error.message);
+
+    const user = users.find(u => u.email === email && u.password === password);
+
+    if (!user) return alert('Invalid credentials');
+
+    sessionUser = user;
+    localStorage.setItem('sessionUser', JSON.stringify(user));
+
+    showDashboard(user);
   }
 
-  async function logout() {
-    await supabase.auth.signOut();
+  function logout() {
+    sessionUser = null;
+    localStorage.removeItem('sessionUser');
+    showLoggedOut();
   }
 
   function emailInput() {
-    return document.getElementById("email").value;
+    return document.getElementById('email').value;
   }
 
   function passwordInput() {
-    return document.getElementById("password").value;
+    return document.getElementById('password').value;
+  }
+
+  // UI
+  function showLogin() {
+    document.getElementById('login-box').classList.remove('hidden');
+    document.getElementById('dashboard').classList.add('hidden');
   }
 
   function showDashboard(user) {
-    document.getElementById("login-box").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
+    document.getElementById('login-box').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
 
-    document.getElementById("auth-section").classList.add("hidden");
-    document.getElementById("user-section").classList.remove("hidden");
-    document.getElementById("user-email").innerText = user.email;
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('user-section').classList.remove('hidden');
+    document.getElementById('user-email').innerText = user.email;
 
     loadAll();
   }
 
   function showLoggedOut() {
-    document.getElementById("login-box").classList.remove("hidden");
-    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById('login-box').classList.remove('hidden');
+    document.getElementById('dashboard').classList.add('hidden');
 
-    document.getElementById("auth-section").classList.remove("hidden");
-    document.getElementById("user-section").classList.add("hidden");
+    document.getElementById('auth-section').classList.remove('hidden');
+    document.getElementById('user-section').classList.add('hidden');
   }
 
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (session) showDashboard(session.user);
-    else showLoggedOut();
-  });
-
-  // 📊 LOAD DATA
-  async function loadAll() {
+  // 📊 LOAD
+  function loadAll() {
     loadClients();
     loadLeads();
     loadPolicies();
   }
 
-  async function loadClients() {
-    const { data } = await API.getClients();
-    document.getElementById("client-count").innerText = data.length;
+  function loadClients() {
+    document.getElementById('client-count').innerText = clients.length;
+    const list = document.getElementById('clients-list');
+    list.innerHTML = '';
 
-    const list = document.getElementById("clients-list");
-    list.innerHTML = "";
-
-    data.forEach(c => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${c.name}</div>`;
+    clients.forEach(c => {
+      list.innerHTML += `<div class='bg-gray-800 p-2 mb-1 rounded'>${c.name}</div>`;
     });
   }
 
-  async function loadLeads() {
-    const { data } = await API.getLeads();
-    document.getElementById("lead-count").innerText = data.length;
+  function loadLeads() {
+    document.getElementById('lead-count').innerText = leads.length;
+    const list = document.getElementById('leads-list');
+    list.innerHTML = '';
 
-    const list = document.getElementById("leads-list");
-    list.innerHTML = "";
-
-    data.forEach(l => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${l.name} (${l.status})</div>`;
+    leads.forEach(l => {
+      list.innerHTML += `<div class='bg-gray-800 p-2 mb-1 rounded'>${l.name}</div>`;
     });
   }
 
-  async function loadPolicies() {
-    const { data } = await API.getPolicies();
-    document.getElementById("policy-count").innerText = data.length;
+  function loadPolicies() {
+    document.getElementById('policy-count').innerText = policies.length;
+    const list = document.getElementById('policies-list');
+    list.innerHTML = '';
 
-    const list = document.getElementById("policies-list");
-    list.innerHTML = "";
-
-    data.forEach(p => {
-      list.innerHTML += `<div class="bg-gray-800 p-2 mb-1 rounded">${p.policy_type} - $${p.premium}</div>`;
+    policies.forEach(p => {
+      list.innerHTML += `<div class='bg-gray-800 p-2 mb-1 rounded'>${p.policy_type} - $${p.premium}</div>`;
     });
   }
 
-  // ➕ ADD DATA
-  async function addClient() {
-    const name = prompt("Client Name:");
-    const email = prompt("Email:");
-    await API.createClient({ name, email });
+  // ➕ ADD
+  function addClient() {
+    const name = prompt('Client Name');
+    clients.push({ name });
+    localStorage.setItem('clients', JSON.stringify(clients));
     loadClients();
   }
 
-  async function addLead() {
-    const name = prompt("Lead Name:");
-    const email = prompt("Email:");
-    await API.createLead({ name, email });
+  function addLead() {
+    const name = prompt('Lead Name');
+    leads.push({ name });
+    localStorage.setItem('leads', JSON.stringify(leads));
     loadLeads();
   }
 
-  async function addPolicy() {
-    const policy_type = prompt("Policy Type:");
-    const premium = prompt("Premium:");
-    await API.createPolicy({ policy_type, premium });
+  function addPolicy() {
+    const policy_type = prompt('Policy Type');
+    const premium = prompt('Premium');
+    policies.push({ policy_type, premium });
+    localStorage.setItem('policies', JSON.stringify(policies));
     loadPolicies();
   }
 
   // INIT
-  window.onload = async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) showDashboard(data.session.user);
+  window.onload = () => {
+    if (sessionUser) showDashboard(sessionUser);
     else showLoggedOut();
   };
 </script>
